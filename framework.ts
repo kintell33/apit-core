@@ -60,8 +60,8 @@ export class APITFramework {
   private testSavedData: APITTestData[] = [];
   private testsRunExpectResult: TestRunResult[] = [];
 
-  private readonly colorFailed = '#CA7661';
-  private readonly colorSuccess = '#81CA61';
+  private readonly colorFailed = '#AD2A0A';
+  private readonly colorSuccess = '#389B35';
 
   public async run() {
     this.createFileReport();
@@ -83,7 +83,7 @@ export class APITFramework {
           return service.service.service
             .request({
               method: service.service.service.defaults.method,
-              url: service.service.service.defaults.baseURL,
+              url: this.replaceEndpointUrlParamsWithSavedData(service.service.service.defaults.baseURL),
               data: service.body,
               headers: this.replaceHeadersWithSavedData(service.headers),
             })
@@ -137,6 +137,31 @@ export class APITFramework {
     });
   }
 
+  private replaceEndpointUrlParamsWithSavedData(baseUrl: string | undefined) {
+    if(!baseUrl) return baseUrl;
+    let url = baseUrl;
+    const paramsString = url.split('?')[1];
+    if (!paramsString) return url;
+    const params = paramsString.split('&');
+    params.forEach((param) => {
+      const [key, value] = param.split('=');
+      const cleanObject = value.replace('@@', '');
+      const parentId = cleanObject.split('.')[0];
+      const path = cleanObject.replace(`${parentId}.`, '');
+      const data = this.testSavedData.find(
+        (savedData) => savedData.parentId === parentId,
+      );
+
+      if (data) {
+        
+
+        const valueToReplace = this.getValueByPath(data.value, path);
+        url = url.replace(param, param.split('=')[0] + '=' + String(valueToReplace));
+      }
+    });
+    return url;
+  }
+
   private replaceHeadersWithSavedData(headers?: Record<string, string>) {
     if (!headers) return headers;
 
@@ -162,6 +187,13 @@ export class APITFramework {
   }
 
   private getValueByPath(obj: unknown, path: string) {
+    //check if path is for look into an array
+    if (path.includes('[')) {
+      const index = path.split(']')[0].replace('[', '');
+      const parameter = path.split(']')[1].replace('.', '');
+      return (obj as Record<string, unknown>[])[Number(index)][parameter];
+    }
+
     return path.split('.').reduce((acc, part) => acc && (acc as Record<string, unknown>)[part], obj);
   }
 

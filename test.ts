@@ -1,6 +1,6 @@
 import { APIT } from './framework';
 import expect from 'expect';
-import { serviceGetProfile, serviceLogin } from './test-services';
+import { serviceGetObjectById, serviceGetProfile, serviceListObjects, serviceLogin } from './test-services';
 
 export const loginTestService = APIT.createTest({
   id: 'LOGIN_TEST',
@@ -26,5 +26,23 @@ export const getProfileTestService = APIT.createTest({
   headers: {
     'application-key': 'portal-web-app',
     Authorization: 'Bearer @@LOGIN_TEST.credentials.idToken', //variables
+  },
+});
+
+export const getListOfObjects = APIT.createTest({
+  id: 'GET_LIST_OBJECTS',
+  service: serviceListObjects,
+  body: {},
+  expects: (result:any) => {
+    expect(result).toBeDefined();
+  },
+});
+
+export const getObjectById = APIT.createTest({
+  id: 'GET_OBJECT_BY_ID',
+  service: serviceGetObjectById,
+  body: {},
+  expects: (result:any) => {
+    expect(result).toBeDefined();
   },
 });

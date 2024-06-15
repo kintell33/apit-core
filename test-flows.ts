@@ -1,5 +1,5 @@
 import { APIT, APITFramework } from "./framework";
-import { getProfileTestService, loginTestService } from "./test";
+import { getListOfObjects, getObjectById, getProfileTestService, loginTestService } from "./test";
 
 class TestExecution {
     async start() {
@@ -8,6 +8,8 @@ class TestExecution {
         const simpleFlow = APIT.createFlow('SIMPLE_FLOW', [
         loginTestService,
         getProfileTestService,
+        getListOfObjects,
+        getObjectById
         ]);
 
         apitFramework.add(simpleFlow);
