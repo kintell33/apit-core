@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosResponse, AxiosRequestConfig } from 'axios';
 import * as fs from 'fs';
 
 export interface APITServiceCreate {
@@ -11,17 +11,17 @@ export interface APITServiceCreate {
 export interface APITTestCreate {
   id: string;
   service: APITService;
-  body: any;
-  headers?: any;
-  expects: any;
+  body: unknown;
+  headers?: Record<string, string>;
+  expects: (data: unknown) => void;
 }
 
 export interface APITTest {
   id: string;
   service: APITService;
-  body: any;
-  headers?: any;
-  expects: any;
+  body: unknown;
+  headers?: Record<string, string>;
+  expects: (data: unknown) => void;
 }
 
 export interface APITService {
@@ -41,28 +41,33 @@ export interface APITFlow {
 
 interface APITTestData {
   parentId: string;
-  value: any;
+  value: unknown;
+}
+
+interface TestRunResult {
+  status: 'no-run' | 'success' | 'failed';
+  service: string;
 }
 
 export class APITFramework {
-  private filePath = 'test-report.md';
+  private filePath: string;
 
   constructor(filePath: string) {
     this.filePath = filePath;
   }
 
-  private flows:any = [];
+  private flows: APITFlow[] = [];
   private testSavedData: APITTestData[] = [];
-  private testsRunExpectResult: any = [];
+  private testsRunExpectResult: TestRunResult[] = [];
 
-  private colorFailed = '#CA7661';
-  private colorSuccess = '#81CA61';
+  private readonly colorFailed = '#CA7661';
+  private readonly colorSuccess = '#81CA61';
 
   public async run() {
     this.createFileReport();
 
-    this.flows.forEach((flow: APITFlow) => {
-      flow.services.forEach((service: APITTest) => {
+    this.flows.forEach((flow) => {
+      flow.services.forEach((service) => {
         this.testsRunExpectResult.push({
           status: 'no-run',
           service: service.id,
@@ -70,10 +75,10 @@ export class APITFramework {
       });
     });
 
-    const promises = this.flows.map((flow: APITFlow) => {
+    const promises = this.flows.map((flow) => {
       console.log(`RUNNING FLOW ${flow.name}`);
       console.log('--------------------------------');
-      return flow.services.reduce((promise, service: APITTest) => {
+      return flow.services.reduce((promise, service) => {
         return promise.then(() => {
           return service.service.service
             .request({
@@ -82,13 +87,13 @@ export class APITFramework {
               data: service.body,
               headers: this.replaceHeadersWithSavedData(service.headers),
             })
-            .then((response: AxiosResponse) => {
+            .then((response) => {
               service.expects(response.data);
               this.addExpectResultOrReplaceIfExist(service.id, 'success');
               this.logData(service.service.id, response);
               this.saveTestData(response, service.id);
             })
-            .catch((error: any) => {
+            .catch((error) => {
               this.addExpectResultOrReplaceIfExist(service.id, 'failed');
               console.log(`Error on service ${service.service.id}`);
               console.error(error);
@@ -99,18 +104,18 @@ export class APITFramework {
     await Promise.all(promises);
   }
 
-  private addExpectResultOrReplaceIfExist(serviceId: string, status: string) {
+  private addExpectResultOrReplaceIfExist(serviceId: string, status: TestRunResult['status']) {
     const index = this.testsRunExpectResult.findIndex(
-      (expect:any) => expect.service === serviceId,
+      (expect) => expect.service === serviceId,
     );
     if (index > -1) {
       this.testsRunExpectResult[index] = {
-        status: status,
+        status,
         service: serviceId,
       };
     } else {
       this.testsRunExpectResult.push({
-        status: status,
+        status,
         service: serviceId,
       });
     }
@@ -132,7 +137,9 @@ export class APITFramework {
     });
   }
 
-  private replaceHeadersWithSavedData(headers: any) {
+  private replaceHeadersWithSavedData(headers?: Record<string, string>) {
+    if (!headers) return headers;
+
     let headersString = JSON.stringify(headers);
     const regex = /@@([a-zA-Z0-9_.]+)/g;
     const matches = headersString.match(regex);
@@ -141,24 +148,24 @@ export class APITFramework {
     matches.forEach((match) => {
       const cleanMatch = match.split('@@')[1];
       const parentId = cleanMatch.split('.')[0];
-      const value = cleanMatch.replace(parentId + '.', '');
+      const value = cleanMatch.replace(`${parentId}.`, '');
       const data = this.testSavedData.find(
         (savedData) => savedData.parentId === parentId,
       );
       if (data) {
         const valueToReplace = this.getValueByPath(data.value, value);
-        headersString = headersString.replace(match, valueToReplace);
+        headersString = headersString.replace(match, String(valueToReplace));
       }
     });
 
     return JSON.parse(headersString);
   }
 
-  private getValueByPath(obj: any, path: string) {
-    return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+  private getValueByPath(obj: unknown, path: string) {
+    return path.split('.').reduce((acc, part) => acc && (acc as Record<string, unknown>)[part], obj);
   }
 
-  private sliceDataLength(data:any, forConsole = false) {
+  private sliceDataLength(data: unknown, forConsole = false) {
     if (!data) return false;
 
     let dataString = forConsole
@@ -169,7 +176,7 @@ export class APITFramework {
       dataString = dataString.slice(0, 150);
     }
 
-    return forConsole ? dataString : ' ```\n' + dataString + '\n``` ';
+    return forConsole ? dataString : `\n\`\`\`json\n${dataString}\n\`\`\`\n`;
   }
 
   private createFileReport() {
@@ -178,11 +185,12 @@ export class APITFramework {
     }
     fs.writeFileSync(this.filePath, '');
   }
+
   private createMermaidReport() {
-    if (fs.existsSync('mermaid-' + this.filePath)) {
-      fs.unlinkSync('mermaid-' + this.filePath);
+    if (fs.existsSync(`mermaid-${this.filePath}`)) {
+      fs.unlinkSync(`mermaid-${this.filePath}`);
     }
-    fs.writeFileSync('mermaid-' + this.filePath, '');
+    fs.writeFileSync(`mermaid-${this.filePath}`, '');
   }
 
   private appendToReport(content: string) {
@@ -190,7 +198,7 @@ export class APITFramework {
   }
 
   private appendToReportMermaid(content: string) {
-    fs.appendFileSync('mermaid-' + this.filePath, content);
+    fs.appendFileSync(`mermaid-${this.filePath}`, content);
   }
 
   private logData(endpointName: string, response: AxiosResponse) {
@@ -216,40 +224,29 @@ export class APITFramework {
     try {
       JSON.parse(str);
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   }
 
   private async createMermaidGraph() {
     this.appendToReportMermaid('```mermaid\n graph LR\n');
-    for (let i = 0; i < this.testsRunExpectResult.length; i++) {
-      if (i === this.testsRunExpectResult.length - 1) {
-        break;
-      }
+    for (let i = 0; i < this.testsRunExpectResult.length - 1; i++) {
       this.appendToReportMermaid(
         `${this.testsRunExpectResult[i].service} --> ${this.testsRunExpectResult[i + 1].service}\n`,
       );
     }
 
-    for (let i = 0; i < this.testsRunExpectResult.length; i++) {
-      if (this.testsRunExpectResult[i].status === 'failed') {
-        this.appendToReportMermaid(
-          `style ${this.testsRunExpectResult[i].service} fill:${this.colorFailed}\n`,
-        );
-      } else if (this.testsRunExpectResult[i].status === 'success') {
-        this.appendToReportMermaid(
-          `style ${this.testsRunExpectResult[i].service} fill:${this.colorSuccess}\n`,
-        );
-      }
-    }
+    this.testsRunExpectResult.forEach((result) => {
+      const color = result.status === 'failed' ? this.colorFailed : this.colorSuccess;
+      this.appendToReportMermaid(`style ${result.service} fill:${color}\n`);
+    });
+
     this.appendToReportMermaid('```');
   }
 }
 
 export class APIT {
-  axios = require('axios');
-
   public static createService({
     id,
     endpoint,
@@ -259,7 +256,7 @@ export class APIT {
       id,
       service: axios.create({
         baseURL: endpoint,
-        method: method,
+        method,
       }),
     };
   }
