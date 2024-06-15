@@ -45,7 +45,7 @@ interface APITTestData {
 }
 
 export class APITFramework {
-  private filePath = 'test-report-generated.md';
+  private filePath = 'test-report.md';
 
   constructor(filePath: string) {
     this.filePath = filePath;
@@ -179,10 +179,10 @@ export class APITFramework {
     fs.writeFileSync(this.filePath, '');
   }
   private createMermaidReport() {
-    if (fs.existsSync('mermaid_' + this.filePath)) {
-      fs.unlinkSync('mermaid_' + this.filePath);
+    if (fs.existsSync('mermaid-' + this.filePath)) {
+      fs.unlinkSync('mermaid-' + this.filePath);
     }
-    fs.writeFileSync('mermaid_' + this.filePath, '');
+    fs.writeFileSync('mermaid-' + this.filePath, '');
   }
 
   private appendToReport(content: string) {
@@ -190,7 +190,7 @@ export class APITFramework {
   }
 
   private appendToReportMermaid(content: string) {
-    fs.appendFileSync('mermaid_' + this.filePath, content);
+    fs.appendFileSync('mermaid-' + this.filePath, content);
   }
 
   private logData(endpointName: string, response: AxiosResponse) {
