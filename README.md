@@ -243,7 +243,7 @@ Users can also add a script to their `package.json` inside `apit-test/` to make 
 ```
 Then, tests can be executed with:
 ```sh
-npm test
+npm test:api
 ```
 
 ---
