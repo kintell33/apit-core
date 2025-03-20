@@ -1,12 +1,12 @@
-import { APIT, APITFramework } from "../dist/apit-core";
+import { APIT, APITFramework } from "../../dist/apit-core";
 import {
   getListOfObjects,
   getObjectById,
   getProfileTestService,
   loginTestService,
-} from "./test";
+} from "./specs";
 
-class TestExecution {
+class TestExecutionFlows {
   async start() {
     const apitFramework = new APITFramework();
 
@@ -24,5 +24,5 @@ class TestExecution {
   }
 }
 
-const testExecution = new TestExecution();
+const testExecution = new TestExecutionFlows();
 testExecution.start();

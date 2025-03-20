@@ -1,11 +1,11 @@
-import { APIT } from "../dist/apit-core";
+import { APIT } from "../../dist/apit-core";
 import expect from "expect";
 import {
   serviceGetObjectById,
   serviceGetProfile,
   serviceListObjects,
   serviceLogin,
-} from "./test-services";
+} from "../src/services";
 
 export const loginTestService = APIT.createTest({
   id: "LOGIN_TEST",

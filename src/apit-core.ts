@@ -81,7 +81,7 @@ export class APITFramework {
     });
 
     const promises = this.flows.map((flow) => {
-      console.log(`RUNNING FLOW ${flow.name}`);
+      console.log(`📦 Running Flow: ${flow.name}`);
       console.log("--------------------------------");
       return flow.services.reduce((promise, service) => {
         return promise.then(() => {
@@ -231,6 +231,8 @@ export class APITFramework {
       fs.unlinkSync(this.filePath);
     }
     fs.writeFileSync(this.filePath, "");
+
+    this.appendToReport(`# 📗 API Test Report\n\n`);
   }
 
   private createMermaidReport() {
@@ -263,7 +265,7 @@ export class APITFramework {
     };
     this.appendToReport(
       `\n## ${
-        error ? "[ERROR] " : ""
+        error ? "❌" : "✅"
       }${endpointName} \n\n ### Request \n\n ${this.sliceDataLength(
         request
       )} \n\n ### Response \n >${error ? "NO-STATUS" : response.status} \n\n ${
@@ -274,7 +276,7 @@ export class APITFramework {
     );
 
     console.log(
-      `${error ? "[ERROR]" : "[OK]   "} - ${endpointName} - ${
+      `${error ? "❌" : "✅"} - ${endpointName} - ${
         response.config.url
       } - Status: ${error ? "NO-STATUS" : response.status}`
     );

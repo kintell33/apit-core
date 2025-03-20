@@ -4,3 +4,4 @@ mermaid-test-report.md
 /dist
 .env
 publish.sh
+/apit-test

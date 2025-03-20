@@ -1,6 +1,6 @@
 {
-  "name": "apit-framework",
-  "version": "1.0.1",
+  "name": "apit-core",
+  "version": "1.0.3",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "description": "APIT Library for API Testing",
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/kintell33/apitframework"
+    "url": "https://github.com/kintell33/apit-core"
   },
   "author": "kintell33",
   "license": "MIT",
