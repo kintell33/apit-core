@@ -8,7 +8,7 @@ import {
 
 class TestExecution {
   async start() {
-    const apitFramework = new APITFramework("test-report.md");
+    const apitFramework = new APITFramework();
 
     const simpleFlow = APIT.createFlow("SIMPLE_FLOW", [
       loginTestService,

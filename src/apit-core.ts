@@ -51,9 +51,14 @@ interface TestRunResult {
 
 export class APITFramework {
   private filePath: string;
+  private mermaidFilePath: string;
 
-  constructor(filePath: string) {
-    this.filePath = filePath;
+  constructor(
+    reportFilePath: string = "test-report.md",
+    mermaidReportFilePath: string = "mermaid-test-report.md"
+  ) {
+    this.filePath = reportFilePath;
+    this.mermaidFilePath = mermaidReportFilePath;
   }
 
   private flows: APITFlow[] = [];
@@ -229,10 +234,10 @@ export class APITFramework {
   }
 
   private createMermaidReport() {
-    if (fs.existsSync(`mermaid-${this.filePath}`)) {
-      fs.unlinkSync(`mermaid-${this.filePath}`);
+    if (fs.existsSync(`${this.mermaidFilePath}`)) {
+      fs.unlinkSync(`${this.mermaidFilePath}`);
     }
-    fs.writeFileSync(`mermaid-${this.filePath}`, "");
+    fs.writeFileSync(`${this.mermaidFilePath}`, "");
   }
 
   private appendToReport(content: string) {
@@ -240,7 +245,7 @@ export class APITFramework {
   }
 
   private appendToReportMermaid(content: string) {
-    fs.appendFileSync(`mermaid-${this.filePath}`, content);
+    fs.appendFileSync(`${this.mermaidFilePath}`, content);
   }
 
   private logData(
@@ -262,7 +267,9 @@ export class APITFramework {
       }${endpointName} \n\n ### Request \n\n ${this.sliceDataLength(
         request
       )} \n\n ### Response \n >${error ? "NO-STATUS" : response.status} \n\n ${
-        error ? `\`\`\`json\n${response.message}\n\`\`\`\n` : this.sliceDataLength(response.data)
+        error
+          ? `\`\`\`json\n${response.message}\n\`\`\`\n`
+          : this.sliceDataLength(response.data)
       } \n`
     );
 
