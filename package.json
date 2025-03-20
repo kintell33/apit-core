@@ -1,13 +1,19 @@
 {
   "name": "apit",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "description": "Library for API Testing",
   "scripts": {
+    "build": "tsc",
     "test": "ts-node examples/test-flows.ts"
   },
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kintell33/apitframework"
+  },
+  "author": "kintell33",
+  "license": "MIT",
   "dependencies": {
     "axios": "^1.7.2",
     "expect": "^29.7.0"
@@ -15,5 +21,10 @@
   "devDependencies": {
     "@types/node": "^20.14.2",
     "ts-node": "^10.9.2"
-  }
+  },
+  "files": [
+    "dist/apit-core.js",
+    "dist/apit-core.d.ts",
+    "README.md"
+  ]
 }

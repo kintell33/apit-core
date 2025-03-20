@@ -97,7 +97,7 @@ export class APITFramework {
             })
             .catch((error) => {
               this.addExpectResultOrReplaceIfExist(service.id, "failed");
-              console.error(`[ERROR] - ${service.service.id}`);
+              this.logData(service.service.id, error, true);
             });
         });
       }, Promise.resolve());
@@ -243,7 +243,11 @@ export class APITFramework {
     fs.appendFileSync(`mermaid-${this.filePath}`, content);
   }
 
-  private logData(endpointName: string, response: AxiosResponse) {
+  private logData(
+    endpointName: string,
+    response: AxiosResponse | any,
+    error: boolean = false
+  ) {
     const request = {
       url: response.config.url,
       method: response.config.method,
@@ -253,15 +257,19 @@ export class APITFramework {
         : "",
     };
     this.appendToReport(
-      `\n## ${endpointName} \n\n ### Request \n\n ${this.sliceDataLength(
+      `\n## ${
+        error ? "[ERROR]" : ""
+      }${endpointName} \n\n ### Request \n\n ${this.sliceDataLength(
         request
-      )} \n\n ### Response \n >${response.status} \n\n ${this.sliceDataLength(
-        response.data
-      )} \n`
+      )} \n\n ### Response \n >${error ? "NO-STATUS" : response.status} \n\n ${
+        error ? `\`\`\`json\n${response.message}\n\`\`\`\n` : this.sliceDataLength(response.data)
+      } \n`
     );
 
     console.log(
-      `[OK]    - ${endpointName} - ${response.config.url} - status:${response.status}`
+      `${error ? "[ERROR]" : "[OK]   "} - ${endpointName} - ${
+        response.config.url
+      } - Status: ${error ? "NO-STATUS" : response.status}`
     );
   }
 
