@@ -1,4 +1,4 @@
-import { APIT } from "../../dist/apit-core";
+import { APIT } from "apit-core";
 import expect from "expect";
 import {
   serviceGetObjectById,

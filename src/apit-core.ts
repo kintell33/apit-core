@@ -49,7 +49,7 @@ interface TestRunResult {
   service: string;
 }
 
-export class APITFramework {
+export class APITCore {
   private filePath: string;
   private mermaidFilePath: string;
 

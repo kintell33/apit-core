@@ -1,6 +1,6 @@
 {
   "name": "apit-core",
-  "version": "1.0.4",
+  "version": "1.0.7",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "description": "APIT Library for API Testing",
@@ -23,11 +23,13 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.2",
+    "apit-core": "^1.0.6",
     "ts-node": "^10.9.2"
   },
   "files": [
     "dist/apit-core.js",
     "dist/apit-core.d.ts",
+    "examples/",
     "README.md"
   ]
 }
