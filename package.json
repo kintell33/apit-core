@@ -5,7 +5,7 @@
   "types": "dist/index.d.ts",
   "description": "APIT Library for API Testing",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp -R examples dist",
     "test": "ts-node examples/test-flows.ts"
   },
   "bin": {
