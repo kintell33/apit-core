@@ -1,9 +1,9 @@
 {
-  "name": "apit",
+  "name": "apit-framework",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "description": "Library for API Testing",
+  "description": "APIT Library for API Testing",
   "scripts": {
     "build": "tsc",
     "test": "ts-node examples/test-flows.ts"

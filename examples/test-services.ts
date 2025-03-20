@@ -1,4 +1,4 @@
-import { APIT } from "../src/apit-core";
+import { APIT } from "../dist/apit-core";
 
 export const serviceLogin = APIT.createService({
     id: 'LOGIN',

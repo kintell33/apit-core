@@ -1,3 +1,5 @@
 /node_modules
 test-report.md
 mermaid-test-report.md
+/dist
+.env

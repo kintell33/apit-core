@@ -1,4 +1,4 @@
-import { APIT, APITFramework } from "../src/apit-core";
+import { APIT, APITFramework } from "../dist/apit-core";
 import {
   getListOfObjects,
   getObjectById,
