@@ -258,7 +258,7 @@ export class APITFramework {
     };
     this.appendToReport(
       `\n## ${
-        error ? "[ERROR]" : ""
+        error ? "[ERROR] " : ""
       }${endpointName} \n\n ### Request \n\n ${this.sliceDataLength(
         request
       )} \n\n ### Response \n >${error ? "NO-STATUS" : response.status} \n\n ${
