@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import axios, { AxiosInstance, AxiosResponse, AxiosRequestConfig } from 'axios';
-import * as fs from 'fs';
+import axios, { AxiosInstance, AxiosResponse } from "axios";
+import * as fs from "fs";
 
 export interface APITServiceCreate {
   id: string;
@@ -45,7 +45,7 @@ interface APITTestData {
 }
 
 interface TestRunResult {
-  status: 'no-run' | 'success' | 'failed';
+  status: "no-run" | "success" | "failed";
   service: string;
 }
 
@@ -60,8 +60,8 @@ export class APITFramework {
   private testSavedData: APITTestData[] = [];
   private testsRunExpectResult: TestRunResult[] = [];
 
-  private readonly colorFailed = '#AD2A0A';
-  private readonly colorSuccess = '#389B35';
+  private readonly colorFailed = "#AD2A0A";
+  private readonly colorSuccess = "#389B35";
 
   public async run() {
     this.createFileReport();
@@ -69,7 +69,7 @@ export class APITFramework {
     this.flows.forEach((flow) => {
       flow.services.forEach((service) => {
         this.testsRunExpectResult.push({
-          status: 'no-run',
+          status: "no-run",
           service: service.id,
         });
       });
@@ -77,26 +77,27 @@ export class APITFramework {
 
     const promises = this.flows.map((flow) => {
       console.log(`RUNNING FLOW ${flow.name}`);
-      console.log('--------------------------------');
+      console.log("--------------------------------");
       return flow.services.reduce((promise, service) => {
         return promise.then(() => {
           return service.service.service
             .request({
               method: service.service.service.defaults.method,
-              url: this.replaceEndpointUrlParamsWithSavedData(service.service.service.defaults.baseURL),
+              url: this.replaceEndpointUrlParamsWithSavedData(
+                service.service.service.defaults.baseURL
+              ),
               data: service.body,
               headers: this.replaceHeadersWithSavedData(service.headers),
             })
             .then((response) => {
               service.expects(response.data);
-              this.addExpectResultOrReplaceIfExist(service.id, 'success');
+              this.addExpectResultOrReplaceIfExist(service.id, "success");
               this.logData(service.service.id, response);
               this.saveTestData(response, service.id);
             })
             .catch((error) => {
-              this.addExpectResultOrReplaceIfExist(service.id, 'failed');
-              console.log(`Error on service ${service.service.id}`);
-              console.error(error);
+              this.addExpectResultOrReplaceIfExist(service.id, "failed");
+              console.error(`[ERROR] - ${service.service.id}`);
             });
         });
       }, Promise.resolve());
@@ -104,9 +105,12 @@ export class APITFramework {
     await Promise.all(promises);
   }
 
-  private addExpectResultOrReplaceIfExist(serviceId: string, status: TestRunResult['status']) {
+  private addExpectResultOrReplaceIfExist(
+    serviceId: string,
+    status: TestRunResult["status"]
+  ) {
     const index = this.testsRunExpectResult.findIndex(
-      (expect) => expect.service === serviceId,
+      (expect) => expect.service === serviceId
     );
     if (index > -1) {
       this.testsRunExpectResult[index] = {
@@ -138,25 +142,26 @@ export class APITFramework {
   }
 
   private replaceEndpointUrlParamsWithSavedData(baseUrl: string | undefined) {
-    if(!baseUrl) return baseUrl;
+    if (!baseUrl) return baseUrl;
     let url = baseUrl;
-    const paramsString = url.split('?')[1];
+    const paramsString = url.split("?")[1];
     if (!paramsString) return url;
-    const params = paramsString.split('&');
+    const params = paramsString.split("&");
     params.forEach((param) => {
-      const [key, value] = param.split('=');
-      const cleanObject = value.replace('@@', '');
-      const parentId = cleanObject.split('.')[0];
-      const path = cleanObject.replace(`${parentId}.`, '');
+      const [key, value] = param.split("=");
+      const cleanObject = value.replace("@@", "");
+      const parentId = cleanObject.split(".")[0];
+      const path = cleanObject.replace(`${parentId}.`, "");
       const data = this.testSavedData.find(
-        (savedData) => savedData.parentId === parentId,
+        (savedData) => savedData.parentId === parentId
       );
 
       if (data) {
-        
-
         const valueToReplace = this.getValueByPath(data.value, path);
-        url = url.replace(param, param.split('=')[0] + '=' + String(valueToReplace));
+        url = url.replace(
+          param,
+          param.split("=")[0] + "=" + String(valueToReplace)
+        );
       }
     });
     return url;
@@ -171,11 +176,11 @@ export class APITFramework {
     if (!matches) return headers;
 
     matches.forEach((match) => {
-      const cleanMatch = match.split('@@')[1];
-      const parentId = cleanMatch.split('.')[0];
-      const value = cleanMatch.replace(`${parentId}.`, '');
+      const cleanMatch = match.split("@@")[1];
+      const parentId = cleanMatch.split(".")[0];
+      const value = cleanMatch.replace(`${parentId}.`, "");
       const data = this.testSavedData.find(
-        (savedData) => savedData.parentId === parentId,
+        (savedData) => savedData.parentId === parentId
       );
       if (data) {
         const valueToReplace = this.getValueByPath(data.value, value);
@@ -188,13 +193,18 @@ export class APITFramework {
 
   private getValueByPath(obj: unknown, path: string) {
     //check if path is for look into an array
-    if (path.includes('[')) {
-      const index = path.split(']')[0].replace('[', '');
-      const parameter = path.split(']')[1].replace('.', '');
+    if (path.includes("[")) {
+      const index = path.split("]")[0].replace("[", "");
+      const parameter = path.split("]")[1].replace(".", "");
       return (obj as Record<string, unknown>[])[Number(index)][parameter];
     }
 
-    return path.split('.').reduce((acc, part) => acc && (acc as Record<string, unknown>)[part], obj);
+    return path
+      .split(".")
+      .reduce(
+        (acc, part) => acc && (acc as Record<string, unknown>)[part],
+        obj
+      );
   }
 
   private sliceDataLength(data: unknown, forConsole = false) {
@@ -215,14 +225,14 @@ export class APITFramework {
     if (fs.existsSync(this.filePath)) {
       fs.unlinkSync(this.filePath);
     }
-    fs.writeFileSync(this.filePath, '');
+    fs.writeFileSync(this.filePath, "");
   }
 
   private createMermaidReport() {
     if (fs.existsSync(`mermaid-${this.filePath}`)) {
       fs.unlinkSync(`mermaid-${this.filePath}`);
     }
-    fs.writeFileSync(`mermaid-${this.filePath}`, '');
+    fs.writeFileSync(`mermaid-${this.filePath}`, "");
   }
 
   private appendToReport(content: string) {
@@ -240,14 +250,18 @@ export class APITFramework {
       headers: response.config.headers,
       body: this.isJSON(response.config.data)
         ? JSON.parse(response.config.data)
-        : '',
+        : "",
     };
     this.appendToReport(
-      `\n## ${endpointName} \n\n ### Request \n\n ${this.sliceDataLength(request)} \n\n ### Response \n >${response.status} \n\n ${this.sliceDataLength(response.data)} \n`,
+      `\n## ${endpointName} \n\n ### Request \n\n ${this.sliceDataLength(
+        request
+      )} \n\n ### Response \n >${response.status} \n\n ${this.sliceDataLength(
+        response.data
+      )} \n`
     );
 
     console.log(
-      `${endpointName} - ${response.config.url} - status:${response.status}\n${this.sliceDataLength(response.data, true)}\n`,
+      `[OK]    - ${endpointName} - ${response.config.url} - status:${response.status}`
     );
   }
 
@@ -262,19 +276,22 @@ export class APITFramework {
   }
 
   private async createMermaidGraph() {
-    this.appendToReportMermaid('```mermaid\n graph LR\n');
+    this.appendToReportMermaid("```mermaid\n graph LR\n");
     for (let i = 0; i < this.testsRunExpectResult.length - 1; i++) {
       this.appendToReportMermaid(
-        `${this.testsRunExpectResult[i].service} --> ${this.testsRunExpectResult[i + 1].service}\n`,
+        `${this.testsRunExpectResult[i].service} --> ${
+          this.testsRunExpectResult[i + 1].service
+        }\n`
       );
     }
 
     this.testsRunExpectResult.forEach((result) => {
-      const color = result.status === 'failed' ? this.colorFailed : this.colorSuccess;
+      const color =
+        result.status === "failed" ? this.colorFailed : this.colorSuccess;
       this.appendToReportMermaid(`style ${result.service} fill:${color}\n`);
     });
 
-    this.appendToReportMermaid('```');
+    this.appendToReportMermaid("```");
   }
 }
 
