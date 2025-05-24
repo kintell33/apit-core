@@ -1,12 +1,12 @@
 {
   "name": "apit-core",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "description": "APIT Library for API Testing",
   "scripts": {
     "build": "tsc && cp -R examples dist",
-    "test": "ts-node examples/test-flows.ts"
+    "test": "ts-node examples/tests/flows.ts"
   },
   "bin": {
     "apitcli": "dist/cli.js"
@@ -19,7 +19,8 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^1.7.2",
-    "expect": "^29.7.0"
+    "expect": "^29.7.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.2",

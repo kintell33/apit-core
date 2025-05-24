@@ -1,28 +1,20 @@
-import { APIT, APITCore } from "apit-core";
-import {
-  getListOfObjects,
-  getObjectById,
-  getProfileTestService,
-  loginTestService,
-} from "./specs";
+import { APIT, APITCore } from "../../src/apit-core";
+import { signUpTestService, verifyEmailTestService } from "./specs";
 
 class TestExecutionFlows {
   async start() {
     const apitFramework = new APITCore();
 
-    const simpleFlow = APIT.createFlow("SIMPLE_FLOW", [
-      loginTestService,
-      getProfileTestService,
-      getListOfObjects,
-      getObjectById,
+    const fullFlow = APIT.createFlow("FULL_FLOW", [
+      signUpTestService,
+      verifyEmailTestService,
     ]);
 
-    apitFramework.add(simpleFlow);
+    apitFramework.add(fullFlow);
 
     await apitFramework.run();
     await apitFramework.generateReportMermaid();
   }
 }
 
-const testExecution = new TestExecutionFlows();
-testExecution.start();
+new TestExecutionFlows().start();

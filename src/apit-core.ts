@@ -2,41 +2,51 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 import * as fs from "fs";
 
-export interface APITServiceCreate {
+export interface APITServiceCreate<
+  TResponse = unknown,
+  TParams = Record<string, string>
+> {
   id: string;
   endpoint: string;
   method: string;
+  responseType?: () => TResponse;
+  params?: TParams;
 }
 
-export interface APITTestCreate {
+export interface APITTestCreate<TResponse = unknown> {
   id: string;
-  service: APITService;
-  body: unknown;
+  service: APITService<TResponse>;
+  body?: unknown;
   headers?: Record<string, string>;
-  expects: (data: unknown) => void;
+  expects: (data: TResponse) => void;
+  params?: Record<string, string | (() => string)>;
 }
 
-export interface APITTest {
+export interface APITService<
+  TResponse = unknown,
+  TParams = Record<string, string>
+> {
   id: string;
-  service: APITService;
-  body: unknown;
-  headers?: Record<string, string>;
-  expects: (data: unknown) => void;
-}
-
-export interface APITService {
-  id: string;
+  endpoint: string;
+  method: string;
+  responseType?: () => TResponse;
+  params?: TParams;
   service: AxiosInstance;
 }
 
-export interface APITFlowCreate {
-  name: string;
-  services: APITTest[];
+export interface APITTest<TResponse = unknown> {
+  id: string;
+  service: APITService<TResponse>;
+  body?: unknown;
+  headers?: Record<string, string>;
+  expects: (data: TResponse) => void;
+  params?: Record<string, string | (() => string)>;
+  response?: TResponse;
 }
 
 export interface APITFlow {
   name: string;
-  services: APITTest[];
+  services: APITTest<any>[];
 }
 
 interface APITTestData {
@@ -85,12 +95,15 @@ export class APITCore {
       console.log("--------------------------------");
       return flow.services.reduce((promise, service) => {
         return promise.then(() => {
+          const finalUrl = this.replaceEndpointPathParamsWithTestParams(
+            service.service.endpoint,
+            service.params
+          );
+
           return service.service.service
             .request({
-              method: service.service.service.defaults.method,
-              url: this.replaceEndpointUrlParamsWithSavedData(
-                service.service.service.defaults.baseURL
-              ),
+              method: service.service.method,
+              url: finalUrl,
               data: service.body,
               headers: this.replaceHeadersWithSavedData(service.headers),
             })
@@ -99,6 +112,7 @@ export class APITCore {
               this.addExpectResultOrReplaceIfExist(service.id, "success");
               this.logData(service.service.id, response);
               this.saveTestData(response, service.id);
+              service.response = response.data;
             })
             .catch((error) => {
               this.addExpectResultOrReplaceIfExist(service.id, "failed");
@@ -108,6 +122,19 @@ export class APITCore {
       }, Promise.resolve());
     });
     await Promise.all(promises);
+  }
+
+  private replaceEndpointPathParamsWithTestParams(
+    endpoint: string,
+    params?: Record<string, string | (() => string)>
+  ): string {
+    if (!params) return endpoint;
+    let updated = endpoint;
+    Object.entries(params).forEach(([key, value]) => {
+      const resolved = typeof value === "function" ? value() : value;
+      updated = updated.replace(`{${key}}`, resolved);
+    });
+    return updated;
   }
 
   private addExpectResultOrReplaceIfExist(
@@ -146,32 +173,6 @@ export class APITCore {
     });
   }
 
-  private replaceEndpointUrlParamsWithSavedData(baseUrl: string | undefined) {
-    if (!baseUrl) return baseUrl;
-    let url = baseUrl;
-    const paramsString = url.split("?")[1];
-    if (!paramsString) return url;
-    const params = paramsString.split("&");
-    params.forEach((param) => {
-      const [key, value] = param.split("=");
-      const cleanObject = value.replace("@@", "");
-      const parentId = cleanObject.split(".")[0];
-      const path = cleanObject.replace(`${parentId}.`, "");
-      const data = this.testSavedData.find(
-        (savedData) => savedData.parentId === parentId
-      );
-
-      if (data) {
-        const valueToReplace = this.getValueByPath(data.value, path);
-        url = url.replace(
-          param,
-          param.split("=")[0] + "=" + String(valueToReplace)
-        );
-      }
-    });
-    return url;
-  }
-
   private replaceHeadersWithSavedData(headers?: Record<string, string>) {
     if (!headers) return headers;
 
@@ -197,7 +198,6 @@ export class APITCore {
   }
 
   private getValueByPath(obj: unknown, path: string) {
-    //check if path is for look into an array
     if (path.includes("[")) {
       const index = path.split("]")[0].replace("[", "");
       const parameter = path.split("]")[1].replace(".", "");
@@ -313,13 +313,22 @@ export class APITCore {
 }
 
 export class APIT {
-  public static createService({
+  public static createService<
+    TResponse = unknown,
+    TParams = Record<string, string>
+  >({
     id,
     endpoint,
     method,
-  }: APITServiceCreate): APITService {
+    responseType,
+    params,
+  }: APITServiceCreate<TResponse, TParams>): APITService<TResponse, TParams> {
     return {
       id,
+      endpoint,
+      method,
+      responseType,
+      params,
       service: axios.create({
         baseURL: endpoint,
         method,
@@ -327,23 +336,25 @@ export class APIT {
     };
   }
 
-  public static createTest({
+  public static createTest<TResponse = unknown>({
     id,
     service,
     body,
     headers,
     expects,
-  }: APITTestCreate): APITTest {
+    params,
+  }: APITTestCreate<TResponse>): APITTest<TResponse> {
     return {
       id,
       service,
       body,
       headers,
       expects,
+      params,
     };
   }
 
-  public static createFlow(name: string, services: APITTest[]): APITFlow {
+  public static createFlow(name: string, services: APITTest<any>[]): APITFlow {
     return {
       name,
       services,
