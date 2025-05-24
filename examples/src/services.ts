@@ -1,4 +1,4 @@
-import { APIT } from "../../src/apit-core";
+import { APIT, HttpMethod } from "../../src/apit-core";
 
 const port = process.env.PORT || 4000;
 const appUrl = `http://localhost:${port}`;
@@ -12,7 +12,7 @@ interface SignUpResponse {
 export const serviceSignUp = APIT.createService<SignUpResponse>({
   id: "SIGN_UP",
   endpoint: `${appUrl}/auth/sign-up`,
-  method: "POST",
+  method: HttpMethod.POST,
 });
 
 export const serviceVerifyEmail = APIT.createService<
@@ -21,5 +21,5 @@ export const serviceVerifyEmail = APIT.createService<
 >({
   id: "VERIFY_EMAIL",
   endpoint: `${appUrl}/auth/verify-user-email/{tokenVerification}`,
-  method: "GET",
+  method: HttpMethod.GET,
 });

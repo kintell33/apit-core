@@ -2,13 +2,22 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 import * as fs from "fs";
 
+export enum HttpMethod {
+  GET = "GET",
+  POST = "POST",
+  PUT = "PUT",
+  DELETE = "DELETE",
+  PATCH = "PATCH",
+  OPTIONS = "OPTIONS",
+}
+
 export interface APITServiceCreate<
   TResponse = unknown,
   TParams = Record<string, string>
 > {
   id: string;
   endpoint: string;
-  method: string;
+  method: HttpMethod;
   responseType?: () => TResponse;
   params?: TParams;
 }
@@ -28,7 +37,7 @@ export interface APITService<
 > {
   id: string;
   endpoint: string;
-  method: string;
+  method: HttpMethod;
   responseType?: () => TResponse;
   params?: TParams;
   service: AxiosInstance;
@@ -106,6 +115,10 @@ export class APITCore {
               url: finalUrl,
               data: service.body,
               headers: this.replaceHeadersWithSavedData(service.headers),
+              maxRedirects: 0,
+              validateStatus: (status) => {
+                return status >= 200 && status < 500;
+              },
             })
             .then((response) => {
               service.expects(response.data);
