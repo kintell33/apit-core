@@ -1,253 +1,180 @@
-# APIT *(API Testing Library for Typescript)*
+# APIT - API Testing Framework for TypeScript
 
-**APIT** is a lightweight and flexible API testing library built with TypeScript, allowing you to define and execute **API tests** in a structured manner.  
-
-With **APIT**, you can:  
-
-- Create **services** that represent API endpoints  
-- Define **test cases** with expected responses  
-- Organize tests into **flows**  
-- Execute tests and generate **detailed reports**  
+**APIT** is a lightweight, fully-typed API testing framework built with TypeScript. It allows you to define API services, write tests with dynamic data flows, and generate test reports including Mermaid diagrams.
 
 ---
 
-## 🚀 **Installation**  
+## 🚀 Installation
 
-Once published on npm, you will be able to install it with:  
-
-```sh
+```bash
 npm install apit-core
 ```
 
-To generate a starter project structure and run tests, install **`apitcli`** globally:  
-
-```sh
-npm install -g apit-core
+If using the CLI (coming soon):
+```bash
+npm install -g apitcli
 ```
 
 ---
 
-## 📌 **Quick Start**  
+## 📦 Features
 
-To quickly set up a project with example files, run:  
-
-```sh
-apitcli start
-```
-
-This will generate the following structure:  
-
-```
-/apit-test
- ├── src/
- │   ├── services.ts
- │
- ├── tests/
- │   ├── flows.ts
- │   ├── specs.ts
-```
-
-To run the tests, simply execute:
-
-```sh
-apitcli run
-```
+- Define reusable **services** for any API endpoint
+- Write **tests** with dynamic param injection and assertions
+- Create **flows** of test cases for end-to-end scenarios
+- Generate Markdown and **Mermaid** diagrams for reports
+- Full **TypeScript support** for request/response types
 
 ---
 
-## 📌 **Generated File Overview**  
+## ⚡ Quick Start
 
-### **1️⃣ Define API Services (`src/services.ts`)**  
-
-Each **service** represents an API endpoint with a unique identifier, an endpoint URL, and an HTTP method.  
+### 1. Define API services
 
 ```ts
-import { APIT } from "../../dist/apit-core";
-
-export const serviceLogin = APIT.createService({
-  id: "LOGIN",
-  endpoint: "https://apit-framework.com/auth/sign-in",
-  method: "POST",
+export const serviceSignUp = APIT.createService<SignUpRequest, SignUpResponse>({
+  id: "SIGN_UP",
+  endpoint: "http://localhost:4000/auth/sign-up",
+  method: HttpMethod.POST,
 });
 
-export const serviceGetProfile = APIT.createService({
-  id: "GET_PROFILE",
-  endpoint: "https://apit-framework.com/auth/profile",
-  method: "GET",
-});
-
-export const serviceListObjects = APIT.createService({
-  id: "GET_LIST_OBJECTS",
-  endpoint: "https://api.example.com/objects",
-  method: "GET",
-});
-
-export const serviceGetObjectById = APIT.createService({
-  id: "GET_OBJECT_BY_ID",
-  endpoint: "https://api.example.com/objects?id=@@GET_LIST_OBJECTS.[0].id",
-  method: "GET",
+export const serviceVerifyEmail = APIT.createService<void, void, { tokenVerification: string }>({
+  id: "VERIFY_EMAIL",
+  endpoint: "http://localhost:4000/auth/verify-user-email/{tokenVerification}",
+  method: HttpMethod.GET,
 });
 ```
 
----
-
-### **2️⃣ Define API Tests (`tests/specs.ts`)**  
-
-Each **test case** executes a request and verifies the response using expectations.  
+### 2. Create test cases
 
 ```ts
-import { APIT } from "../../dist/apit-core";
-import expect from "expect";
-import {
-  serviceGetObjectById,
-  serviceGetProfile,
-  serviceListObjects,
-  serviceLogin,
-} from "../src/services";
-
-export const loginTestService = APIT.createTest({
-  id: "LOGIN_TEST",
-  service: serviceLogin,
-  body: { email: "email@test.com", password: "password" },
-  expects: (result: any) => {
-    expect(result).toHaveProperty("credentials.accessToken");
-    expect(result).toHaveProperty("status");
-    expect(result).toHaveProperty("roles");
-  },
-  headers: {
-    "api-key": "api-key-value",
+export const signUpTestService = APIT.createTest({
+  id: "SIGN_UP",
+  service: serviceSignUp,
+  body: { email, password, username },
+  expects: (res) => {
+    expect(res).toHaveProperty("tokenVerification");
+    expect(res).toHaveProperty("id");
   },
 });
 
-export const getProfileTestService = APIT.createTest({
-  id: "PROFILE_TEST",
-  service: serviceGetProfile,
-  body: {},
-  expects: (result: any) => {
-    expect(result).toBeDefined();
+export const verifyEmailTestService = APIT.createTest({
+  id: "VERIFY_EMAIL",
+  service: serviceVerifyEmail,
+  params: {
+    tokenVerification: () => signUpTestService.response?.tokenVerification || "",
   },
-  headers: {
-    "api-key": "api-key-value",
-    Authorization: "Bearer @@LOGIN_TEST.credentials.idToken",
-  },
-});
-
-export const getListOfObjects = APIT.createTest({
-  id: "GET_LIST_OBJECTS",
-  service: serviceListObjects,
-  body: {},
-  expects: (result: any) => {
-    expect(result).toBeDefined();
-  },
-});
-
-export const getObjectById = APIT.createTest({
-  id: "GET_OBJECT_BY_ID",
-  service: serviceGetObjectById,
-  body: {},
-  expects: (result: any) => {
-    expect(result).toBeDefined();
-  },
+  expects: () => {},
 });
 ```
 
----
-
-### **3️⃣ Create and Run a Test Flow (`tests/flows.ts`)**  
-
-Flows allow you to group multiple test cases in a specific execution order.  
+### 3. Execute a flow
 
 ```ts
-import { APIT, APITFramework } from "../../dist/apit-core";
-import {
-  getListOfObjects,
-  getObjectById,
-  getProfileTestService,
-  loginTestService,
-} from "./specs";
+const apit = new APITCore();
+const flow = APIT.createFlow("FULL_FLOW", [
+  signUpTestService,
+  verifyEmailTestService,
+]);
 
-class TestExecutionFlows {
-  async start() {
-    const apitFramework = new APITFramework();
-
-    const simpleFlow = APIT.createFlow("SIMPLE_FLOW", [
-      loginTestService,
-      getProfileTestService,
-      getListOfObjects,
-      getObjectById,
-    ]);
-
-    apitFramework.add(simpleFlow);
-
-    await apitFramework.run();
-    await apitFramework.generateReportMermaid();
-  }
-}
-
-const testExecution = new TestExecutionFlows();
-testExecution.start();
+apit.add(flow);
+await apit.run();
+await apit.generateReportMermaid();
 ```
 
 ---
 
-## 📜 **Test Execution Reports**  
+## 📁 Project Structure
 
-After running tests, two files are generated:  
+```
+apit-tests/
+├── src/
+│   └── services.ts       # Your API service definitions
+├── tests/
+│   ├── specs.ts          # Reusable test cases
+│   └── flows.ts          # Combine test cases into flows
+└── test-report.md        # Markdown execution report (autogenerated)
+```
 
-- **Execution Report:** Contains request and response details.  
-- **Mermaid Flowchart Report:** Displays the test execution flow.  
+---
 
-### **Example Mermaid Report**  
+## 📊 Reports
 
-The following Mermaid flowchart shows the execution order of test cases:  
+After running, APIT will generate:
+
+- `test-report.md` – Full request/response logs
+- `mermaid-test-report.md` – Execution flow diagram in Mermaid
+
+Example:
 
 ```mermaid
 graph LR
-LOGIN_TEST --> PROFILE_TEST
-PROFILE_TEST --> GET_LIST_OBJECTS
-GET_LIST_OBJECTS --> GET_OBJECT_BY_ID
-style LOGIN_TEST fill:#389B35
-style PROFILE_TEST fill:#389B35
-style GET_LIST_OBJECTS fill:#AD2A0A
-style GET_OBJECT_BY_ID fill:#AD2A0A
+SIGN_UP --> VERIFY_EMAIL
+style SIGN_UP fill:#389B35
+style VERIFY_EMAIL fill:#389B35
 ```
 
 ---
 
-## ✅ **Why Use APIT?**  
+## ✅ Why APIT?
 
-- **TypeScript Support** – Get full type safety and autocompletion.  
-- **Customizable Test Flows** – Define execution sequences for complex API scenarios.  
-- **Automated Test Reports** – Generate Markdown logs and Mermaid diagrams.  
-- **Lightweight & Flexible** – No unnecessary dependencies, easy to integrate.  
+- 🔐 Full TypeScript type safety
+- 🔀 Reuse services across tests
+- 🧪 Clear test structure with expectations
+- ⚡ Dynamic params from previous tests
+- 📄 Mermaid + Markdown reports out of the box
 
 ---
 
-## 🎯 **Using the CLI (`apitcli`)**  
+## 📦 More Examples
 
-Once installed, you can run:  
-
-```sh
-apitcli start  # Generates the initial project structure
-apitcli run    # Executes the tests automatically
+### Using dynamic values from prior tests in headers:
+```ts
+Authorization: "Bearer @@SIGN_IN.credentials.token"
 ```
 
-Users can also add a script to their `package.json` inside `apit-test/` to make running tests even easier:
+### Extracting a value from an array:
+```ts
+endpoint: "http://localhost:4000/items/{id}?id=@@GET_ITEMS.[0].id"
+```
 
-```json
-{
-  "scripts": {
-    "test:api": "apitcli run"
-  }
+### Using a test with no body (GET):
+```ts
+export const getHealth = APIT.createTest({
+  id: "HEALTH_CHECK",
+  service: APIT.createService<void, { status: string }>({
+    id: "HEALTH",
+    endpoint: "http://localhost:4000/health",
+    method: HttpMethod.GET,
+  }),
+  expects: (res) => {
+    expect(res.status).toBe("ok");
+  },
+});
+```
+
+### Using `params` in the request body:
+```ts
+body: {
+  email: "user@example.com",
+  mfaCode: "{mfaCode}"
+},
+params: {
+  mfaCode: () => getMfaTest.response?.code || ""
 }
 ```
-Then, tests can be executed with:
-```sh
-npm test:api
+
+---
+
+## 💪 CLI (Planned)
+
+```bash
+apitcli start   # Create starter files
+apitcli run     # Run all test flows
 ```
 
 ---
 
-## 🛠 **License**  
+## 🛠 License
 
-This project is licensed under the **MIT License**.  
+MIT © 2024
