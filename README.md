@@ -11,13 +11,14 @@ npm install apit-core
 ```
 
 If using the CLI (coming soon):
+
 ```bash
 npm install -g apitcli
 ```
 
 ---
 
-## 📦 Features
+## 💼 Features
 
 - Define reusable **services** for any API endpoint
 - Write **tests** with dynamic param injection and assertions
@@ -38,7 +39,11 @@ export const serviceSignUp = APIT.createService<SignUpRequest, SignUpResponse>({
   method: HttpMethod.POST,
 });
 
-export const serviceVerifyEmail = APIT.createService<void, void, { tokenVerification: string }>({
+export const serviceVerifyEmail = APIT.createService<
+  void,
+  void,
+  { tokenVerification: string }
+>({
   id: "VERIFY_EMAIL",
   endpoint: "http://localhost:4000/auth/verify-user-email/{tokenVerification}",
   method: HttpMethod.GET,
@@ -62,7 +67,8 @@ export const verifyEmailTestService = APIT.createTest({
   id: "VERIFY_EMAIL",
   service: serviceVerifyEmail,
   params: {
-    tokenVerification: () => signUpTestService.response?.tokenVerification || "",
+    tokenVerification: () =>
+      signUpTestService.response?.tokenVerification || "",
   },
   expects: () => {},
 });
@@ -120,27 +126,59 @@ style VERIFY_EMAIL fill:#389B35
 
 - 🔐 Full TypeScript type safety
 - 🔀 Reuse services across tests
-- 🧪 Clear test structure with expectations
+- 🤪 Clear test structure with expectations
 - ⚡ Dynamic params from previous tests
 - 📄 Mermaid + Markdown reports out of the box
 
 ---
 
-## 📦 More Examples
+## 💼 More Examples
 
-### Using dynamic values from prior tests in headers:
+### Using dynamic values from prior tests in path, body or headers:
+
 ```ts
-Authorization: "Bearer @@SIGN_IN.credentials.token"
+export const signInTestService = APIT.createTest({
+  id: "SIGN_IN",
+  service: serviceSignIn,
+  body: {
+    email,
+    password,
+    mfaCode: "{mfaCode}",
+  },
+  params: {
+    mfaCode: () => getMfaCodeTestService.response?.tokenMfa || "",
+  },
+  expects: (result) => {
+    expect(result).toHaveProperty("credentials");
+    expect(result.credentials).toHaveProperty("token");
+  },
+});
 ```
 
-### Extracting a value from an array:
+### Replacing headers dynamically:
+
 ```ts
-endpoint: "http://localhost:4000/items/{id}?id=@@GET_ITEMS.[0].id"
+headers: {
+  Authorization: "Bearer {token}"
+},
+params: {
+  token: () => signInTestService.response?.credentials.token || "",
+},
 ```
 
-### Using a test with no body (GET):
+### Interpolating values from arrays:
+
 ```ts
-export const getHealth = APIT.createTest({
+params: {
+  id: () => getListItems.response?.[0].id || ""
+},
+endpoint: "http://localhost:4000/items/{id}"
+```
+
+### No-body request:
+
+```ts
+export const healthCheck = APIT.createTest({
   id: "HEALTH_CHECK",
   service: APIT.createService<void, { status: string }>({
     id: "HEALTH",
@@ -151,17 +189,6 @@ export const getHealth = APIT.createTest({
     expect(res.status).toBe("ok");
   },
 });
-```
-
-### Using `params` in the request body:
-```ts
-body: {
-  email: "user@example.com",
-  mfaCode: "{mfaCode}"
-},
-params: {
-  mfaCode: () => getMfaTest.response?.code || ""
-}
 ```
 
 ---
@@ -175,6 +202,6 @@ apitcli run     # Run all test flows
 
 ---
 
-## 🛠 License
+## 🚧 License
 
 MIT © 2024
