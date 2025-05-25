@@ -3,10 +3,21 @@ import { APIT, HttpMethod } from "../../src/apit-core";
 const port = process.env.PORT || 4000;
 const appUrl = `http://localhost:${port}`;
 
+interface SignUpRequest {
+  email: string;
+  password: string;
+  username: string;
+}
+
 interface SignUpResponse {
   id: string;
   username: string;
   tokenVerification: string;
+}
+
+interface GetMFARequest {
+  email: string;
+  password: string;
 }
 
 interface GetMFAResponse {
@@ -22,13 +33,20 @@ interface SignInResponse {
   credentials: SignInCredentialsResponse;
 }
 
-export const serviceSignUp = APIT.createService<SignUpResponse>({
+interface SignInRequest {
+  email: string;
+  password: string;
+  mfaCode: string;
+}
+
+export const serviceSignUp = APIT.createService<SignUpRequest, SignUpResponse>({
   id: "SIGN_UP",
   endpoint: `${appUrl}/auth/sign-up`,
   method: HttpMethod.POST,
 });
 
 export const serviceVerifyEmail = APIT.createService<
+  void,
   void,
   { tokenVerification: string }
 >({
@@ -38,6 +56,7 @@ export const serviceVerifyEmail = APIT.createService<
 });
 
 export const serviceGetMfa = APIT.createService<
+  GetMFARequest,
   GetMFAResponse,
   {
     email: string;
@@ -50,10 +69,9 @@ export const serviceGetMfa = APIT.createService<
 });
 
 export const serviceSignIn = APIT.createService<
+  SignInRequest,
   SignInResponse,
   {
-    email: string;
-    password: string;
     mfaCode: string;
   }
 >({

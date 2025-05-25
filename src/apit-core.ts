@@ -12,6 +12,7 @@ export enum HttpMethod {
 }
 
 export interface APITServiceCreate<
+  TRequest = unknown,
   TResponse = unknown,
   TParams = Record<string, string>
 > {
@@ -22,16 +23,17 @@ export interface APITServiceCreate<
   params?: TParams;
 }
 
-export interface APITTestCreate<TResponse = unknown> {
+export interface APITTestCreate<TRequest = unknown, TResponse = unknown> {
   id: string;
-  service: APITService<TResponse>;
-  body?: unknown;
+  service: APITService<TRequest, TResponse>;
+  body?: TRequest;
   headers?: Record<string, string>;
   expects: (data: TResponse) => void;
   params?: Record<string, string | (() => string)>;
 }
 
 export interface APITService<
+  TRequest = unknown,
   TResponse = unknown,
   TParams = Record<string, string>
 > {
@@ -43,10 +45,10 @@ export interface APITService<
   service: AxiosInstance;
 }
 
-export interface APITTest<TResponse = unknown> {
+export interface APITTest<TRequest = unknown, TResponse = unknown> {
   id: string;
-  service: APITService<TResponse>;
-  body?: unknown;
+  service: APITService<TRequest, TResponse>;
+  body?: TRequest;
   headers?: Record<string, string>;
   expects: (data: TResponse) => void;
   params?: Record<string, string | (() => string)>;
@@ -55,7 +57,7 @@ export interface APITTest<TResponse = unknown> {
 
 export interface APITFlow {
   name: string;
-  services: APITTest<any>[];
+  services: APITTest<any, any>[];
 }
 
 interface APITTestData {
@@ -117,7 +119,7 @@ export class APITCore {
               headers: this.replaceHeadersWithSavedData(service.headers),
               maxRedirects: 0,
               validateStatus: (status) => {
-                return status >= 200 && status < 500;
+                return status >= 200 && status < 400;
               },
             })
             .then((response) => {
@@ -327,6 +329,7 @@ export class APITCore {
 
 export class APIT {
   public static createService<
+    TRequest = unknown,
     TResponse = unknown,
     TParams = Record<string, string>
   >({
@@ -335,7 +338,11 @@ export class APIT {
     method,
     responseType,
     params,
-  }: APITServiceCreate<TResponse, TParams>): APITService<TResponse, TParams> {
+  }: APITServiceCreate<TRequest, TResponse, TParams>): APITService<
+    TRequest,
+    TResponse,
+    TParams
+  > {
     return {
       id,
       endpoint,
@@ -349,14 +356,14 @@ export class APIT {
     };
   }
 
-  public static createTest<TResponse = unknown>({
+  public static createTest<TRequest = unknown, TResponse = unknown>({
     id,
     service,
     body,
     headers,
     expects,
     params,
-  }: APITTestCreate<TResponse>): APITTest<TResponse> {
+  }: APITTestCreate<TRequest, TResponse>): APITTest<TRequest, TResponse> {
     return {
       id,
       service,
@@ -367,7 +374,10 @@ export class APIT {
     };
   }
 
-  public static createFlow(name: string, services: APITTest<any>[]): APITFlow {
+  public static createFlow(
+    name: string,
+    services: APITTest<any, any>[]
+  ): APITFlow {
     return {
       name,
       services,
