@@ -33,6 +33,7 @@ export const serviceVerifyEmail = APIT.createService<
   id: "VERIFY_EMAIL",
   endpoint: `${appUrl}/auth/verify-user-email/{tokenVerification}`,
   method: HttpMethod.GET,
+  maxRedirects: 0,
 });
 
 // Service GetMFA
