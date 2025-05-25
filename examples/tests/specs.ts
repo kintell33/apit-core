@@ -1,7 +1,12 @@
 import { APIT } from "../../src/apit-core";
 import expect from "expect";
 import { v4 as uuidv4 } from "uuid";
-import { serviceSignUp, serviceVerifyEmail } from "../src/services";
+import {
+  serviceGetMfa,
+  serviceSignIn,
+  serviceSignUp,
+  serviceVerifyEmail,
+} from "../src/services";
 
 const getUUID = () => uuidv4().replace(/-/g, "");
 
@@ -27,7 +32,32 @@ export const verifyEmailTestService = APIT.createTest({
     tokenVerification: () =>
       signUpTestService.response?.tokenVerification || "",
   },
-  expects: () => {
-    expect(true).toBe(true); // ajustar según comportamiento real del endpoint
+  expects: () => {},
+});
+
+export const getMfaCodeTestService = APIT.createTest({
+  id: "GET_MFA",
+  service: serviceGetMfa,
+  body: {
+    email,
+    password,
+  },
+  expects: (result) => {
+    expect(result).toHaveProperty("tokenMfa");
+    expect(result).toHaveProperty("message");
+  },
+});
+
+export const signInTestService = APIT.createTest({
+  id: "SIGN_IN",
+  service: serviceSignIn,
+  body: {
+    email,
+    password,
+    mfaCode: () => getMfaCodeTestService.response?.tokenMfa || "",
+  },
+  expects: (result) => {
+    expect(result).toHaveProperty("credentials");
+    expect(result.credentials).toHaveProperty("token");
   },
 });

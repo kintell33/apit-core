@@ -1,5 +1,10 @@
 import { APIT, APITCore } from "../../src/apit-core";
-import { signUpTestService, verifyEmailTestService } from "./specs";
+import {
+  getMfaCodeTestService,
+  signInTestService,
+  signUpTestService,
+  verifyEmailTestService,
+} from "./specs";
 
 class TestExecutionFlows {
   async start() {
@@ -8,6 +13,8 @@ class TestExecutionFlows {
     const fullFlow = APIT.createFlow("FULL_FLOW", [
       signUpTestService,
       verifyEmailTestService,
+      getMfaCodeTestService,
+      signInTestService,
     ]);
 
     apitFramework.add(fullFlow);

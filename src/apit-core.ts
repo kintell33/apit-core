@@ -269,11 +269,11 @@ export class APITCore {
     error: boolean = false
   ) {
     const request = {
-      url: response.config.url,
-      method: response.config.method,
-      headers: response.config.headers,
-      body: this.isJSON(response.config.data)
-        ? JSON.parse(response.config.data)
+      url: response.config?.url,
+      method: response.config?.method,
+      headers: response.config?.headers,
+      body: this.isJSON(response.config?.data)
+        ? JSON.parse(response.config?.data)
         : "",
     };
     this.appendToReport(
@@ -290,7 +290,7 @@ export class APITCore {
 
     console.log(
       `${error ? "❌" : "✅"} - ${endpointName} - ${
-        response.config.url
+        response.config?.url
       } - Status: ${error ? "NO-STATUS" : response.status}`
     );
   }

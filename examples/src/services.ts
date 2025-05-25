@@ -9,6 +9,19 @@ interface SignUpResponse {
   tokenVerification: string;
 }
 
+interface GetMFAResponse {
+  message: string;
+  tokenMfa: string;
+}
+
+interface SignInCredentialsResponse {
+  token: string;
+}
+
+interface SignInResponse {
+  credentials: SignInCredentialsResponse;
+}
+
 export const serviceSignUp = APIT.createService<SignUpResponse>({
   id: "SIGN_UP",
   endpoint: `${appUrl}/auth/sign-up`,
@@ -22,4 +35,29 @@ export const serviceVerifyEmail = APIT.createService<
   id: "VERIFY_EMAIL",
   endpoint: `${appUrl}/auth/verify-user-email/{tokenVerification}`,
   method: HttpMethod.GET,
+});
+
+export const serviceGetMfa = APIT.createService<
+  GetMFAResponse,
+  {
+    email: string;
+    password: string;
+  }
+>({
+  id: "GET_MFA",
+  endpoint: `${appUrl}/auth/get-mfa-code`,
+  method: HttpMethod.POST,
+});
+
+export const serviceSignIn = APIT.createService<
+  SignInResponse,
+  {
+    email: string;
+    password: string;
+    mfaCode: string;
+  }
+>({
+  id: "SIGN_IN",
+  endpoint: `${appUrl}/auth/sign-in`,
+  method: HttpMethod.POST,
 });
