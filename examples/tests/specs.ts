@@ -54,7 +54,7 @@ export const signInTestService = APIT.createTest({
   body: {
     email,
     password,
-    mfaCode: getMfaCodeTestService.response?.tokenMfa || "",
+    mfaCode: "{mfaCode}",
   },
   params: {
     mfaCode: () => getMfaCodeTestService.response?.tokenMfa || "",

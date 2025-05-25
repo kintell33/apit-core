@@ -115,7 +115,10 @@ export class APITCore {
             .request({
               method: service.service.method,
               url: finalUrl,
-              data: service.body,
+              data: this.replaceBodyParamsWithTestParams(
+                service.body,
+                service.params
+              ),
               headers: this.replaceHeadersWithSavedData(service.headers),
               maxRedirects: 0,
               validateStatus: (status) => {
@@ -150,6 +153,23 @@ export class APITCore {
       updated = updated.replace(`{${key}}`, resolved);
     });
     return updated;
+  }
+
+  private replaceBodyParamsWithTestParams<T>(
+    body: T,
+    params?: Record<string, string | (() => string)>
+  ): T {
+    if (!body || typeof body !== "object" || Array.isArray(body)) return body;
+    const strBody = JSON.stringify(body);
+    if (!params) return body;
+
+    let updated = strBody;
+    Object.entries(params).forEach(([key, value]) => {
+      const resolved = typeof value === "function" ? value() : value;
+      updated = updated.replace(new RegExp(`{${key}}`, "g"), resolved);
+    });
+
+    return JSON.parse(updated);
   }
 
   private addExpectResultOrReplaceIfExist(
